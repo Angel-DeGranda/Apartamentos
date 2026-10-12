@@ -25,8 +25,6 @@ Antes de ejecutar la API, instala o verifica lo siguiente:
 
 ## Configuración segura
 
-La aplicación obtiene la configuración de conexión a MySQL desde variables de entorno. **No guardes contraseñas reales en `application.properties`, en el README ni en el repositorio.**
-
 ### 1. Configurar `application.properties`
 
 En `src/main/resources/application.properties`, utiliza propiedades como las siguientes:
@@ -34,16 +32,30 @@ En `src/main/resources/application.properties`, utiliza propiedades como las sig
 ```properties
 spring.application.name=apartamentos
 
-spring.datasource.url=${SPRING_DATASOURCE_URL}
-spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
-spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+spring.datasource.url=${TU_URL_DE_LA_BASE_DE_DATOS_AQUI}
+spring.datasource.username=${TU_USUARIO_AQUI}
+spring.datasource.password=${TU_CONTRASENIA_AQUI}
 
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=false
-server.port=${SERVER_PORT:8080}
+server.port=${TU_PUERTO_DE_SERVIDOR_AQUI}
 ```
 
-Estas líneas contienen referencias a variables de entorno, no credenciales. Las tres variables `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` y `SPRING_DATASOURCE_PASSWORD` deben definirse antes de iniciar la aplicación.
+Estas líneas contienen referencias a variables de entorno, no credenciales; deben definirse antes de iniciar la aplicación, si no se inician se tomarán las predefinidas que son:
+
+```properties
+spring.application.name=apartamentos
+
+spring.datasource.url=jdbc:mysql://localhost:3306/apartamentos_blue
+spring.datasource.username=root
+spring.datasource.password=root
+
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+server.port=8080
+```
+
+En caso de que cuentes con otros datos, cambialos segun tu base de datos.
 
 > **Nota:** `spring.jpa.hibernate.ddl-auto=update` permite que Hibernate actualice el esquema automáticamente. Para producción, evalúa una estrategia de migraciones controladas y realiza respaldos de la base de datos. Evita activar el registro de SQL si puede revelar datos sensibles.
 
@@ -345,3 +357,26 @@ Por ejemplo, si se envía un correo duplicado o fechas no válidas, la API podr�
   "mensaje": "El correo electrónico ya se encuentra registrado"
 }
 ```
+
+---
+
+## Interfaz Web (Navegación con Thymeleaf)
+
+Además de los endpoints de la API REST, el sistema cuenta con un panel web interactivo desarrollado con **Thymeleaf** y **Bootstrap 5** para la gestión visual del sistema.
+
+### Acceso a las Vistas
+
+Al iniciar la aplicación (`http://localhost:8080`), la raíz redirige automáticamente al módulo de clientes. Puedes acceder directamente a cada sección a través de las siguientes URLs:
+
+* **Inicio / Clientes:** `http://localhost:8080/vista/clientes`
+  * Alta, consulta, edición y eliminación de propietarios y arrendatarios.
+* **Propiedades:** `http://localhost:8080/vista/propiedades`
+  * Catálogo general de inmuebles (pisos y habitaciones) con asignación de propietarios.
+* **Disponibilidad:** `http://localhost:8080/vista/disponibilidades`
+  * Control de fechas bloqueadas y asignación de precios especiales por inmueble.
+* **Reservas:** `http://localhost:8080/vista/reservas`
+  * Registro de alquileres y cancelación de reservas activas.
+* **Pagos:** `http://localhost:8080/vista/pagos`
+  * Registro de abonos y control del estado financiero (Pendiente, Pagado, Atrasado, Cancelado).
+* **Reportes:** `http://localhost:8080/vista/reportes`
+  * Panel gráfico con métricas de ingresos liquidados, porcentaje de ocupación y listado de clientes deudores (morosidad).
