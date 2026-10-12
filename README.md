@@ -171,6 +171,7 @@ Los siguientes endpoints describen las operaciones disponibles en la API. Los no
 | `GET` | `/api/propiedades` | Listar pisos y habitaciones. |
 | `GET` | `/api/propiedades/{id}` | Consultar una propiedad por ID. |
 | `GET` | `/api/propiedades/propietario/{idPropietario}` | Listar propiedades de un propietario. |
+| `GET` | `/api/propiedades/tipo/{tipo}` | Filtrar propiedades por tipo (`PISO` o `HABITACION`). |
 | `POST` | `/api/propiedades` | Registrar un piso o una habitación. |
 | `PUT` | `/api/propiedades/{id}` | Actualizar una propiedad. |
 | `DELETE` | `/api/propiedades/{id}` | Eliminar una propiedad. |

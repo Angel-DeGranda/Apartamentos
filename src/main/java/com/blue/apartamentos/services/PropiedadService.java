@@ -54,6 +54,11 @@ public class PropiedadService {
         return propiedadRepository.findByPropietarioId(idPropietario);
     }
 
+    // Obtener lista de propiedades filtradas por tipo
+    public List<PropiedadModel> obtenerPorTipo(String tipo) {
+        return propiedadRepository.findByTipoIgnoreCase(tipo);
+    }
+
     public PropiedadModel actualizar(Long id, PropiedadModel propiedadActualizada) {
         PropiedadModel propiedadExistente = obtenerPorId(id);
 

@@ -22,21 +22,23 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/api/propiedades")
 public class PropiedadController {
-    
+
     @Autowired
     private PropiedadService propiedadService;
 
-    // Aquí irán los métodos para manejar las solicitudes HTTP relacionadas con las propiedades
-    // Obtener todas las propiedades, obtener por ID, crear, actualizar, eliminar, etc.
-    
-    //Recuperar todas la propiedades
+    // Aquí irán los métodos para manejar las solicitudes HTTP relacionadas con las
+    // propiedades
+    // Obtener todas las propiedades, obtener por ID, crear, actualizar, eliminar,
+    // etc.
+
+    // Recuperar todas la propiedades
     @GetMapping
     public ResponseEntity<List<PropiedadModel>> obtenerTodas() {
         return ResponseEntity.ok(propiedadService.getAllPropiedades());
     }
 
-    //Propiedad por ID
-    //... Similar a ClienteController
+    // Propiedad por ID
+    // ... Similar a ClienteController
     @GetMapping("/{id}")
     public ResponseEntity<PropiedadModel> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(propiedadService.obtenerPorId(id));
@@ -50,7 +52,8 @@ public class PropiedadController {
 
     // Actualizar propiedad existente
     @PutMapping("/{id}")
-    public ResponseEntity<PropiedadModel> actualizar(@PathVariable Long id, @Valid @RequestBody PropiedadModel propiedad) {
+    public ResponseEntity<PropiedadModel> actualizar(@PathVariable Long id,
+            @Valid @RequestBody PropiedadModel propiedad) {
         return ResponseEntity.ok(propiedadService.actualizar(id, propiedad));
     }
 
@@ -60,10 +63,13 @@ public class PropiedadController {
         propiedadService.deletePropiedad(id);
         return ResponseEntity.noContent().build();
     }
-    
+
     // ACTIVIDAD: Crea un metodo para Recuperar propiedades por tipo
-
-
+    // Recuperar propiedades filtradas por tipo (Ej: /api/propiedades/tipo/PISO o /api/propiedades/tipo/HABITACION)
+    @GetMapping("/tipo/{tipo}")
+    public ResponseEntity<List<PropiedadModel>> obtenerPorTipo(@PathVariable String tipo) {
+        return ResponseEntity.ok(propiedadService.obtenerPorTipo(tipo));
+    }
 
     // ACTIVIDAD: Crea un metodo para Recuoperar todas propiedades de un Propietario
     // Consultar las propiedades registradas a nombre de un propietario específico
