@@ -92,26 +92,6 @@ Estas variables se aplican a la sesión actual de terminal. Si abres otra termin
 
 `SERVER_PORT` es opcional porque la configuración anterior usa `8080` como valor predeterminado. Las tres variables de conexión a la base de datos sí deben estar definidas.
 
-### 4. Revisar el `.gitignore`
-
-Comprueba que el `.gitignore` excluya los archivos locales que podrían contener secretos. Por ejemplo:
-
-```gitignore
-# Configuración local y secretos
-.env
-.env.*
-!.env.example
-application-local.properties
-secrets.properties
-
-# Archivos de compilación
-target/
-```
-
-Este bloque es un ejemplo que puedes integrar en tu `.gitignore` existente; no reemplaces las reglas actuales sin revisarlas. Spring Boot **no carga automáticamente un archivo `.env` por el solo hecho de existir**: necesitarías configurar un mecanismo adicional para utilizarlo.
-
-> **Importante:** `.gitignore` no deja de rastrear archivos que ya se habían agregado o confirmado (commit). Si una credencial real llegó a GitHub, elimínala del código y del historial cuando corresponda, pero sobre todo **cambia o revoca esa credencial**. Borrar el texto en un commit posterior no garantiza que el secreto desaparezca del historial.
-
 ## Instalación y ejecución
 
 ### 1. Clonar el repositorio
