@@ -344,11 +344,3 @@ Por ejemplo, si se envía un correo duplicado o fechas no válidas, la API podr�
   "mensaje": "El correo electrónico ya se encuentra registrado"
 }
 ```
-
-## Recomendaciones antes de publicar en GitHub
-
-- Confirma que `application.properties` no contenga contraseñas reales.
-- No subas archivos `.env` ni archivos locales con secretos.
-- Revisa los cambios antes de confirmar: `git status` y `git diff`.
-- Si un secreto ya fue publicado, cámbialo o revócalo; no basta con borrarlo del archivo.
-- Verifica que los endpoints y los ejemplos coincidan con el código real de los controladores y DTO.
