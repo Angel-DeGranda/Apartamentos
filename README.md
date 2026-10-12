@@ -99,8 +99,8 @@ Estas variables se aplican a la sesión actual de terminal. Si abres otra termin
 Sustituye la URL por la dirección real del repositorio:
 
 ```bash
-git clone <url-del-repositorio>
-cd <carpeta-del-proyecto>
+git clone https://github.com/Angel-DeGranda/Apartamentos.git
+cd Apartamentos
 ```
 
 ### 2. Crear la base de datos
