@@ -1,382 +1,300 @@
-# Sistema de Gestión de Rentas e Inmuebles — Apartamentos API
+# API y Sistema de Gestión de Alquileres --- Apartamentos
 
-API REST desarrollada con **Java y Spring Boot** para administrar el alquiler de pisos completos y habitaciones. Permite gestionar clientes (propietarios y arrendatarios), propiedades, disponibilidades, reservas, pagos y reportes de ocupación e ingresos.
+API REST y panel web interactivo para la administración integral de
+propiedades en alquiler, tanto pisos completos como habitaciones. El
+sistema permite gestionar clientes, propiedades, disponibilidad de
+calendario, reservas, pagos y reportes financieros.
 
-El proyecto busca centralizar la información y reducir la dependencia de procesos manuales y hojas de cálculo.
+Está desarrollado con **Java 21**, **Spring Boot**, **Spring Data JPA**,
+**MySQL** y **Thymeleaf**. La interfaz web utiliza **Bootstrap 5**.
+
+------------------------------------------------------------------------
+
+## Estructura del proyecto
+
+El proyecto utiliza una arquitectura simplificada organizada en cuatro
+paquetes principales:
+
+``` text
+src/main/java/com/api/apartamentos
+├── controllers    # Controladores REST (/api/...) y vistas Thymeleaf (/vista/...)
+├── models         # Entidades JPA, modelos de datos y reportes
+├── repositories   # Interfaces de acceso a datos (Spring Data JPA)
+└── services       # Lógica de negocio y manejo de excepciones
+
+src/main/resources
+├── application.properties  # Configuración de la aplicación
+└── templates               # Plantillas HTML de Thymeleaf
+```
 
 ## Tecnologías utilizadas
 
-- **Java:** 17 o superior.
-- **Spring Boot:** 3.x.
-- **Spring Web:** creación de endpoints REST.
-- **Spring Data JPA:** persistencia y acceso a datos.
-- **Jakarta Validation:** validación de datos de entrada.
-- **MySQL:** 8.x.
-- **Hibernate:** ORM utilizado por JPA.
-- **Apache Maven:** administración de dependencias y compilación.
+-   **Java 21**
+-   **Spring Boot**
+-   **Spring Web** para la creación de endpoints REST.
+-   **Spring Data JPA** para la persistencia y el acceso a datos.
+-   **Hibernate / JPA** como tecnología ORM.
+-   **MySQL 8.x** como base de datos.
+-   **MySQL JDBC Driver** para la conexión con la base de datos.
+-   **Thymeleaf** para las vistas del panel web.
+-   **Bootstrap 5** para el diseño de la interfaz.
+-   **Apache Maven** para gestionar dependencias y compilar el proyecto.
+-   **Maven Wrapper (`mvnw`)** para ejecutar Maven sin requerir una
+    instalación global.
 
-## Requisitos previos
+## Descripción de módulos
 
-Antes de ejecutar la API, instala o verifica lo siguiente:
+  -------------------------------------------------------------------------
+  Módulo                  Ruta REST                 Descripción
+  ----------------------- ------------------------- -----------------------
+  Clientes                `/api/clientes`           Administra el registro,
+                                                    consulta y
+                                                    actualización de
+                                                    clientes, clasificados
+                                                    como `PROPIETARIO` o
+                                                    `ARRENDATARIO`.
 
-- JDK 17 o superior.
-- MySQL Server 8.x en ejecución.
-- Maven 3.8 o superior, o el Maven Wrapper incluido en el proyecto (`./mvnw` o `mvnw.cmd`).
+  Propiedades             `/api/propiedades`        Gestiona el catálogo de
+                                                    inmuebles (`PISO` y
+                                                    `HABITACION`), su
+                                                    asignación a
+                                                    propietarios, precios
+                                                    por noche, capacidad y
+                                                    características.
 
-## Configuración segura
+  Disponibilidad          `/api/disponibilidades`   Controla el calendario
+                                                    por inmueble y permite
+                                                    registrar bloqueos de
+                                                    fechas y tarifas
+                                                    especiales por
+                                                    temporada.
 
-### 1. Configurar `application.properties`
+  Reservas                `/api/reservas`           Procesa la creación y
+                                                    cancelación de
+                                                    alquileres, validando
+                                                    la disponibilidad de
+                                                    fechas y los tipos de
+                                                    usuario.
 
-En `src/main/resources/application.properties`, utiliza propiedades como las siguientes:
+  Pagos                   `/api/pagos`              Registra cobros, abonos
+                                                    y métodos de pago
+                                                    (`EFECTIVO`, `TARJETA`,
+                                                    `TRANSFERENCIA`), y
+                                                    gestiona estados
+                                                    (`PENDIENTE`, `PAGADO`,
+                                                    `ATRASADO`,
+                                                    `CANCELADO`).
 
-```properties
-spring.application.name=apartamentos
+  Reportes                `/api/reportes`           Genera métricas de
+                                                    ocupación por inmueble,
+                                                    ingresos liquidados y
+                                                    listado de clientes
+                                                    deudores.
+  -------------------------------------------------------------------------
 
-spring.datasource.url=${TU_URL_DE_LA_BASE_DE_DATOS_AQUI}
-spring.datasource.username=${TU_USUARIO_AQUI}
-spring.datasource.password=${TU_CONTRASENIA_AQUI}
+## Interfaz web --- Vistas Thymeleaf
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=false
-server.port=${TU_PUERTO_DE_SERVIDOR_AQUI}
-```
+El sistema incluye una interfaz web interactiva basada en Bootstrap 5.
+Con la aplicación en ejecución local, se puede acceder a las siguientes
+rutas:
 
-Estas líneas contienen referencias a variables de entorno, no credenciales; deben definirse antes de iniciar la aplicación, si no se inician se tomarán las predefinidas que son:
+  ------------------------------------------------------------------------------------
+  Sección                             URL local
+  ----------------------------------- ------------------------------------------------
+  Clientes                            <http://localhost:8080/vista/clientes>
 
-```properties
-spring.application.name=apartamentos
+  Propiedades                         <http://localhost:8080/vista/propiedades>
 
-spring.datasource.url=jdbc:mysql://localhost:3306/apartamentos_blue
-spring.datasource.username=root
-spring.datasource.password=root
+  Disponibilidad                      <http://localhost:8080/vista/disponibilidades>
 
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=false
-server.port=8080
-```
+  Reservas                            <http://localhost:8080/vista/reservas>
 
-En caso de que cuentes con otros datos, cambialos segun tu base de datos.
+  Pagos                               <http://localhost:8080/vista/pagos>
 
-> **Nota:** `spring.jpa.hibernate.ddl-auto=update` permite que Hibernate actualice el esquema automáticamente. Para producción, evalúa una estrategia de migraciones controladas y realiza respaldos de la base de datos. Evita activar el registro de SQL si puede revelar datos sensibles.
+  Reportes                            <http://localhost:8080/vista/reportes>
+  ------------------------------------------------------------------------------------
 
-### 2. Crear la base de datos
+La ruta raíz de la aplicación también puede dirigir a la vista de
+clientes: <http://localhost:8080>.
 
-Conéctate a MySQL y ejecuta:
+## Instalación y ejecución local
 
-```sql
-CREATE DATABASE IF NOT EXISTS apartamentos_blue;
-```
+### Requisitos previos
 
-Este comando crea la base de datos, pero no crea un usuario ni establece una contraseña. Utiliza las credenciales de una cuenta de MySQL configurada en tu entorno.
-
-### 3. Definir las variables de entorno
-
-Los siguientes ejemplos son para una máquina de desarrollo local. Sustituye los valores de usuario y contraseña por los que realmente hayas configurado en tu MySQL. No publiques contraseñas reales.
-
-**Linux / macOS (Bash):**
-
-```bash
-export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/apartamentos_blue"
-export SPRING_DATASOURCE_USERNAME="tu_usuario_mysql"
-export SPRING_DATASOURCE_PASSWORD="tu_contraseña_mysql"
-export SERVER_PORT="8080"
-```
-
-**Windows (PowerShell):**
-
-```powershell
-$env:SPRING_DATASOURCE_URL = "jdbc:mysql://localhost:3306/apartamentos_blue"
-$env:SPRING_DATASOURCE_USERNAME = "tu_usuario_mysql"
-$env:SPRING_DATASOURCE_PASSWORD = "tu_contraseña_mysql"
-$env:SERVER_PORT = "8080"
-```
-
-Estas variables se aplican a la sesión actual de terminal. Si abres otra terminal, tendrás que configurarlas de nuevo.
-
-### Variables de entorno necesarias
-
-| Variable | Descripción | Ejemplo no secreto |
-|---|---|---|
-| `SPRING_DATASOURCE_URL` | URL de conexión a MySQL | `jdbc:mysql://localhost:3306/apartamentos_blue` |
-| `SPRING_DATASOURCE_USERNAME` | Usuario de MySQL | `tu_usuario_mysql` |
-| `SPRING_DATASOURCE_PASSWORD` | Contraseña del usuario de MySQL | No se proporciona un valor real |
-| `SERVER_PORT` | Puerto HTTP de la API | `8080` |
-
-`SERVER_PORT` es opcional porque la configuración anterior usa `8080` como valor predeterminado. Las tres variables de conexión a la base de datos sí deben estar definidas.
-
-## Instalación y ejecución
+-   **JDK 21** instalado.
+-   **MySQL 8.x** instalado y en ejecución.
+-   Maven instalado (opcional si se utiliza el Maven Wrapper incluido en
+    el proyecto).
 
 ### 1. Clonar el repositorio
 
-Sustituye la URL por la dirección real del repositorio:
-
-```bash
+``` bash
 git clone https://github.com/Angel-DeGranda/Apartamentos.git
 cd Apartamentos
 ```
 
 ### 2. Crear la base de datos
 
-Ejecuta en MySQL:
+Conéctate a MySQL y ejecuta:
 
-```sql
-CREATE DATABASE IF NOT EXISTS apartamentos_blue;
+``` sql
+CREATE DATABASE IF NOT EXISTS apartamentos_blue
+    CHARACTER SET utf8mb4;
 ```
+
+La creación o actualización de tablas dependerá de la configuración de
+Hibernate definida en `application.properties`.
 
 ### 3. Configurar las variables de entorno
 
-Sigue las instrucciones de la sección [Configuración segura](#configuración-segura) correspondientes a tu sistema operativo. Verifica que las variables estén definidas en la misma terminal desde la que ejecutarás la API.
+Para evitar subir credenciales a GitHub, configura los datos de conexión
+mediante variables de entorno. No escribas contraseñas reales en el
+README ni las confirmes en Git.
 
-### 4. Compilar el proyecto
+En `src/main/resources/application.properties`, utiliza referencias a
+variables de entorno, por ejemplo:
 
-**Linux / macOS:**
+``` properties
+spring.application.name=apartamentos
 
-```bash
-./mvnw clean package
+spring.datasource.url=${SPRING_DATASOURCE_URL}
+spring.datasource.username=${SPRING_DATASOURCE_USERNAME}
+spring.datasource.password=${SPRING_DATASOURCE_PASSWORD}
+
+server.port=${SERVER_PORT:8080}
 ```
 
-**Windows:**
+Si el archivo ya contiene otras propiedades necesarias para el
+funcionamiento del proyecto, consérvalas. No reemplaces todo el archivo
+sin revisar la configuración actual.
 
-```powershell
-.\mvnw.cmd clean package
+#### macOS, Linux o Git Bash (Windows)
+
+``` bash
+export SPRING_DATASOURCE_URL="jdbc:mysql://localhost:3306/apartamentos_blue"
+export SPRING_DATASOURCE_USERNAME="tu_usuario_mysql"
+export SPRING_DATASOURCE_PASSWORD="tu_contraseña_mysql"
+export SERVER_PORT="8080"
 ```
 
-Si el proyecto no incluye Maven Wrapper, utiliza `mvn clean package` si Maven está instalado. Para compilar y ejecutar las pruebas, no agregues `-DskipTests`; úsalo únicamente si tienes una razón concreta para omitirlas.
+#### Windows PowerShell
 
-### 5. Ejecutar la aplicación
-
-**Linux / macOS:**
-
-```bash
-./mvnw spring-boot:run
+``` powershell
+$env:SPRING_DATASOURCE_URL = "jdbc:mysql://localhost:3306/apartamentos_blue"
+$env:SPRING_DATASOURCE_USERNAME = "tu_usuario_mysql"
+$env:SPRING_DATASOURCE_PASSWORD = "tu_contraseña_mysql"
+$env:SERVER_PORT = "8080"
 ```
 
-**Windows:**
+#### Windows CMD
 
-```powershell
+``` bat
+set SPRING_DATASOURCE_URL=jdbc:mysql://localhost:3306/apartamentos_blue
+set SPRING_DATASOURCE_USERNAME=tu_usuario_mysql
+set SPRING_DATASOURCE_PASSWORD=tu_contraseña_mysql
+set SERVER_PORT=8080
+```
+
+Los ejemplos utilizan marcadores de posición: sustitúyelos por las
+credenciales configuradas en tu entorno local. Estas variables se
+aplican a la sesión de terminal actual.
+
+### Variables de entorno
+
+  ------------------------------------------------------------------------------
+  Variable                       Descripción             Obligatoria
+  ------------------------------ ----------------------- -----------------------
+  `SPRING_DATASOURCE_URL`        URL de conexión a MySQL Sí
+
+  `SPRING_DATASOURCE_USERNAME`   Usuario de MySQL        Sí
+
+  `SPRING_DATASOURCE_PASSWORD`   Contraseña del usuario  Sí
+                                 de MySQL                
+
+  `SERVER_PORT`                  Puerto HTTP de la       No; por defecto, `8080`
+                                 aplicación              
+  ------------------------------------------------------------------------------
+
+### 4. Ejecutar la aplicación
+
+Con las variables de entorno definidas en la terminal, inicia la
+aplicación usando el Maven Wrapper.
+
+**Windows PowerShell:**
+
+``` powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Si el inicio termina correctamente, la API estará disponible en:
+**Windows CMD:**
 
-[http://localhost:8080](http://localhost:8080)
-
-## Listado de endpoints
-
-Los siguientes endpoints describen las operaciones disponibles en la API. Los nombres de campos, parámetros y códigos de respuesta definitivos dependen de la implementación del proyecto.
-
-### Clientes — `/api/clientes`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/clientes` | Listar todos los clientes. |
-| `GET` | `/api/clientes/{id}` | Obtener un cliente por ID. |
-| `GET` | `/api/clientes/tipo/{tipo}` | Filtrar por tipo: `PROPIETARIO` o `ARRENDATARIO`. |
-| `POST` | `/api/clientes` | Registrar un cliente. |
-| `PUT` | `/api/clientes/{id}` | Actualizar un cliente. |
-| `DELETE` | `/api/clientes/{id}` | Eliminar un cliente. |
-
-### Propiedades — `/api/propiedades`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/propiedades` | Listar pisos y habitaciones. |
-| `GET` | `/api/propiedades/{id}` | Consultar una propiedad por ID. |
-| `GET` | `/api/propiedades/propietario/{idPropietario}` | Listar propiedades de un propietario. |
-| `GET` | `/api/propiedades/tipo/{tipo}` | Filtrar propiedades por tipo (`PISO` o `HABITACION`). |
-| `POST` | `/api/propiedades` | Registrar un piso o una habitación. |
-| `PUT` | `/api/propiedades/{id}` | Actualizar una propiedad. |
-| `DELETE` | `/api/propiedades/{id}` | Eliminar una propiedad. |
-
-### Disponibilidades — `/api/disponibilidades`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/disponibilidades/propiedad/{idPropiedad}` | Consultar disponibilidades o bloqueos de una propiedad. |
-| `POST` | `/api/disponibilidades` | Registrar un rango de disponibilidad o un precio especial. |
-| `DELETE` | `/api/disponibilidades/{id}` | Eliminar un rango de disponibilidad. |
-
-### Reservas — `/api/reservas`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/reservas` | Listar todas las reservas. |
-| `GET` | `/api/reservas/{id}` | Consultar una reserva por ID. |
-| `GET` | `/api/reservas/arrendatario/{idArrendatario}` | Consultar las reservas de un arrendatario. |
-| `POST` | `/api/reservas` | Crear una reserva. |
-| `PUT` | `/api/reservas/{id}/cancelar` | Cancelar una reserva activa. |
-
-### Pagos — `/api/pagos`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/pagos` | Listar todos los pagos. |
-| `GET` | `/api/pagos/reserva/{idReserva}` | Consultar pagos y abonos de una reserva. |
-| `POST` | `/api/pagos` | Registrar un abono o una liquidación. |
-| `PUT` | `/api/pagos/{id}/estado?nuevoEstado={ESTADO}` | Actualizar el estado: `PENDIENTE`, `PAGADO`, `ATRASADO` o `CANCELADO`. |
-
-### Reportes — `/api/reportes`
-
-| Método | Endpoint | Descripción |
-|---|---|---|
-| `GET` | `/api/reportes/ocupacion?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD` | Consultar la ocupación por propiedad en un período. |
-| `GET` | `/api/reportes/ingresos?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD` | Consultar los ingresos liquidados en un período. |
-| `GET` | `/api/reportes/deudores` | Consultar morosidad y cuentas por cobrar. |
-
-## Ejemplos de peticiones y respuestas
-
-Los siguientes ejemplos ilustran el formato esperado de las peticiones y respuestas. Los datos son ficticios y las respuestas pueden variar según la implementación real.
-
-### 1. Registrar un cliente
-
-**Petición — `POST /api/clientes`**
-
-```http
-POST /api/clientes
-Content-Type: application/json
+``` bat
+mvnw.cmd spring-boot:run
 ```
 
-```json
-{
-  "tipo": "ARRENDATARIO",
-  "nombres": "Ana",
-  "apellidos": "Gómez",
-  "email": "ana.gomez@example.com",
-  "telefono": "5559876543",
-  "fechaNacimiento": "1992-11-15",
-  "ine": "INE0987654321",
-  "direccion": "Calle Insurgentes 50, CDMX",
-  "estatus": "ACTIVO",
-  "password": "CambiarPorUnaClaveDePrueba"
-}
+**macOS, Linux o Git Bash:**
+
+``` bash
+./mvnw spring-boot:run
 ```
 
-**Respuesta ilustrativa — `201 Created`**
+Si no se incluye el Maven Wrapper en el repositorio y tienes Maven
+instalado, puedes ejecutar:
 
-```json
-{
-  "id": 2,
-  "tipo": "ARRENDATARIO",
-  "nombres": "Ana",
-  "apellidos": "Gómez",
-  "email": "ana.gomez@example.com",
-  "telefono": "5559876543",
-  "fechaNacimiento": "1992-11-15",
-  "ine": "INE0987654321",
-  "direccion": "Calle Insurgentes 50, CDMX",
-  "fechaRegistro": "2026-10-11T18:00:00",
-  "estatus": "ACTIVO"
-}
+``` bash
+mvn spring-boot:run
 ```
 
-> En una implementación real, la contraseña nunca debe devolverse en la respuesta. Debe almacenarse mediante un hash seguro y no como texto plano.
+Una vez iniciada correctamente, la aplicación estará disponible en
+<http://localhost:8080>, o en el puerto que hayas definido mediante
+`SERVER_PORT`.
 
-### 2. Crear una reserva
+## Manejo de errores HTTP
 
-**Petición — `POST /api/reservas`**
+Los controladores REST gestionan los errores mediante
+`@ExceptionHandler`. Los códigos esperados según la implementación
+descrita son:
 
-```http
-POST /api/reservas
-Content-Type: application/json
-```
+  ------------------------------------------------------------------------
+  Código HTTP                         Condición / causa
+  ----------------------------------- ------------------------------------
+  `200 OK`                            Consulta o actualización realizada
+                                      exitosamente.
 
-```json
-{
-  "arrendatario": {
-    "id": 2
-  },
-  "propiedad": {
-    "idPropiedad": 1
-  },
-  "fechaInicio": "2026-11-01",
-  "fechaFin": "2026-11-05",
-  "precioTotal": 6000.00
-}
-```
+  `201 Created`                       Registro creado correctamente en la
+                                      base de datos.
 
-**Respuesta ilustrativa — `201 Created`**
+  `204 No Content`                    Eliminación realizada con éxito, sin
+                                      contenido en la respuesta.
 
-```json
-{
-  "idReserva": 1,
-  "arrendatario": {
-    "id": 2,
-    "tipo": "ARRENDATARIO",
-    "nombres": "Ana",
-    "apellidos": "Gómez",
-    "email": "ana.gomez@example.com"
-  },
-  "propiedad": {
-    "idPropiedad": 1,
-    "titulo": "Departamento de ejemplo en Condesa",
-    "tipo": "PISO"
-  },
-  "fechaInicio": "2026-11-01",
-  "fechaFin": "2026-11-05",
-  "precioTotal": 6000.00,
-  "estado": "PENDIENTE",
-  "fechaCreacion": "2026-10-11T18:05:00"
-}
-```
+  `400 Bad Request`                   Regla de negocio incumplida o datos
+                                      de entrada inválidos, por ejemplo,
+                                      una `IllegalArgumentException`.
 
-### 3. Consultar el reporte de deudores
+  `404 Not Found`                     Recurso solicitado no encontrado por
+                                      ID, por ejemplo, una
+                                      `NoSuchElementException`.
 
-**Petición — `GET /api/reportes/deudores`**
+  `409 Conflict`                      Conflicto de integridad referencial
+                                      o clave foránea, por ejemplo, una
+                                      `DataIntegrityViolationException`.
+  ------------------------------------------------------------------------
 
-```http
-GET /api/reportes/deudores
-```
+Los mensajes y códigos exactos que devuelve la aplicación dependen del
+manejo de excepciones implementado en los controladores.
 
-**Respuesta ilustrativa — `200 OK`**
+## Recomendaciones antes de publicar en GitHub
 
-```json
-[
-  {
-    "idPago": 3,
-    "idReserva": 2,
-    "nombreCliente": "Carlos Mendoza",
-    "emailCliente": "carlos.mendoza@example.com",
-    "telefonoCliente": "5551234567",
-    "montoPendiente": 1800.00,
-    "fechaVencimiento": "2026-10-01"
-  }
-]
-```
-
-### 4. Error de validación
-
-**Respuesta ilustrativa — `400 Bad Request`**
-
-Por ejemplo, si se envía un correo duplicado o fechas no válidas, la API podría devolver un error con una estructura similar a esta, siempre que el manejo de errores esté implementado de esa manera:
-
-```json
-{
-  "timestamp": "2026-10-11T18:10:00",
-  "status": 400,
-  "error": "Petición Incorrecta",
-  "mensaje": "El correo electrónico ya se encuentra registrado"
-}
-```
-
----
-
-## Interfaz Web (Navegación con Thymeleaf)
-
-Además de los endpoints de la API REST, el sistema cuenta con un panel web interactivo desarrollado con **Thymeleaf** y **Bootstrap 5** para la gestión visual del sistema.
-
-### Acceso a las Vistas
-
-Al iniciar la aplicación (`http://localhost:8080`), la raíz redirige automáticamente al módulo de clientes. Puedes acceder directamente a cada sección a través de las siguientes URLs:
-
-* **Inicio / Clientes:** `http://localhost:8080/vista/clientes`
-  * Alta, consulta, edición y eliminación de propietarios y arrendatarios.
-* **Propiedades:** `http://localhost:8080/vista/propiedades`
-  * Catálogo general de inmuebles (pisos y habitaciones) con asignación de propietarios.
-* **Disponibilidad:** `http://localhost:8080/vista/disponibilidades`
-  * Control de fechas bloqueadas y asignación de precios especiales por inmueble.
-* **Reservas:** `http://localhost:8080/vista/reservas`
-  * Registro de alquileres y cancelación de reservas activas.
-* **Pagos:** `http://localhost:8080/vista/pagos`
-  * Registro de abonos y control del estado financiero (Pendiente, Pagado, Atrasado, Cancelado).
-* **Reportes:** `http://localhost:8080/vista/reportes`
-  * Panel gráfico con métricas de ingresos liquidados, porcentaje de ocupación y listado de clientes deudores (morosidad).
+-   No incluyas contraseñas reales en `application.properties`, en el
+    README ni en otros archivos versionados.
+-   Comprueba que `.gitignore` excluya archivos locales con secretos,
+    como `.env` o configuraciones privadas.
+-   Ten en cuenta que `.gitignore` no deja de rastrear archivos que ya
+    fueron agregados a Git.
+-   Antes de confirmar cambios, revisa `git status` y
+    `git diff --cached`.
+-   Si una contraseña real ya fue publicada, cámbiala o revócala; borrar
+    el valor de un commit posterior no lo elimina necesariamente del
+    historial.
+-   Verifica que las rutas, los nombres de los campos y los códigos HTTP
+    documentados coincidan con el código actual de la API.

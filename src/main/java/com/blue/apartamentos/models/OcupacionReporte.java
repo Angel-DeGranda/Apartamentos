@@ -1,24 +1,12 @@
-package com.blue.apartamentos.dto;
+package com.blue.apartamentos.models;
 
-public class ReporteOcupacionDTO {
-    
+public class OcupacionReporte {
     private Long idPropiedad;
     private String tituloPropiedad;
     private String tipoPropiedad;
     private long totalReservas;
     private long diasReservados;
 
-    public ReporteOcupacionDTO() {}
-
-    public ReporteOcupacionDTO(Long idPropiedad, String tituloPropiedad, String tipoPropiedad, long totalReservas, long diasReservados) {
-        this.idPropiedad = idPropiedad;
-        this.tituloPropiedad = tituloPropiedad;
-        this.tipoPropiedad = tipoPropiedad;
-        this.totalReservas = totalReservas;
-        this.diasReservados = diasReservados;
-    }
-
-    // Getters y Setters
     public Long getIdPropiedad() {
         return idPropiedad;
     }
@@ -58,4 +46,6 @@ public class ReporteOcupacionDTO {
     public void setDiasReservados(long diasReservados) {
         this.diasReservados = diasReservados;
     }
+
+    
 }

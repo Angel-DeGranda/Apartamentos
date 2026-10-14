@@ -1,24 +1,14 @@
-package com.blue.apartamentos.dto;
+package com.blue.apartamentos.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class ReporteIngresosDTO {
+public class ReporteIngresos {
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
     private BigDecimal totalIngresos;
-    private int cantidadPagosRegistrados;
+    private long cantidadPagosRegistrados;
 
-    public ReporteIngresosDTO() {}
-
-    public ReporteIngresosDTO(LocalDate fechaInicio, LocalDate fechaFin, BigDecimal totalIngresos, int cantidadPagosRegistrados) {
-        this.fechaInicio = fechaInicio;
-        this.fechaFin = fechaFin;
-        this.totalIngresos = totalIngresos;
-        this.cantidadPagosRegistrados = cantidadPagosRegistrados;
-    }
-
-    // Getters y Setters
     public LocalDate getFechaInicio() {
         return fechaInicio;
     }
@@ -43,11 +33,11 @@ public class ReporteIngresosDTO {
         this.totalIngresos = totalIngresos;
     }
 
-    public int getCantidadPagosRegistrados() {
+    public long getCantidadPagosRegistrados() {
         return cantidadPagosRegistrados;
     }
 
-    public void setCantidadPagosRegistrados(int cantidadPagosRegistrados) {
+    public void setCantidadPagosRegistrados(long cantidadPagosRegistrados) {
         this.cantidadPagosRegistrados = cantidadPagosRegistrados;
     }
 

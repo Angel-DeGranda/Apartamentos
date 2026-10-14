@@ -1,13 +1,11 @@
 package com.blue.apartamentos.services;
 
 import java.util.List;
-import java.util.Optional;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.blue.apartamentos.exceptions.BadRequestException;
-import com.blue.apartamentos.exceptions.ResourceNotFoundException;
 import com.blue.apartamentos.models.ClienteModel;
 import com.blue.apartamentos.models.PropiedadModel;
 import com.blue.apartamentos.repositories.IClienteRepository;
@@ -22,66 +20,68 @@ public class PropiedadService {
     @Autowired
     private IClienteRepository clienteRepository;
 
-    public List<PropiedadModel> getAllPropiedades() {
+    public List<PropiedadModel> obtenerTodas() {
         return propiedadRepository.findAll();
     }
 
-    public Optional<PropiedadModel> getPropiedadById(Long id) {
-        return propiedadRepository.findById(id);
+    public PropiedadModel obtenerPorId(Long id) {
+        return propiedadRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Propiedad no encontrada con ID: " + id));
     }
 
-    public PropiedadModel savePropiedad(PropiedadModel propiedad) {
-        // Verificar que el propietario exista en la base de datos
-        ClienteModel propietario = clienteRepository.findById(propiedad.getPropietario().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("El propietario especificado no existe"));
+    public List<PropiedadModel> obtenerPorPropietario(Long idPropietario) {
+        if (!clienteRepository.existsById(idPropietario)) {
+            throw new NoSuchElementException("El propietario especificado no existe.");
+        }
+        return propiedadRepository.findByPropietarioId(idPropietario);
+    }
 
-        // Validar que el cliente tenga rol de PROPIETARIO
+    public List<PropiedadModel> obtenerPorTipo(String tipo) {
+        return propiedadRepository.findByTipoIgnoreCase(tipo);
+    }
+
+    public PropiedadModel guardar(PropiedadModel propiedad) {
+        if (propiedad.getPropietario() == null || propiedad.getPropietario().getId() == null) {
+            throw new IllegalArgumentException("Debe especificar un propietario válido para la propiedad.");
+        }
+
+        ClienteModel propietario = clienteRepository.findById(propiedad.getPropietario().getId())
+                .orElseThrow(() -> new NoSuchElementException("El propietario no existe."));
+
         if (propietario.getTipo() != ClienteModel.TipoCliente.PROPIETARIO) {
-            throw new BadRequestException("El cliente asignado no tiene el rol de PROPIETARIO");
+            throw new IllegalArgumentException("El cliente asignado debe ser de tipo PROPIETARIO.");
         }
 
         propiedad.setPropietario(propietario);
         return propiedadRepository.save(propiedad);
     }
 
-    // ACTIVIDAD: Crea un metodo Recuperar propiedades por tipo
-    public PropiedadModel obtenerPorId(Long id) {
-        return propiedadRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Propiedad no encontrada con el ID: " + id));
-    }
-
-    public List<PropiedadModel> obtenerPorPropietario(Long idPropietario) {
-        return propiedadRepository.findByPropietarioId(idPropietario);
-    }
-
-    // Obtener lista de propiedades filtradas por tipo
-    public List<PropiedadModel> obtenerPorTipo(String tipo) {
-        return propiedadRepository.findByTipoIgnoreCase(tipo);
-    }
-
     public PropiedadModel actualizar(Long id, PropiedadModel propiedadActualizada) {
-        PropiedadModel propiedadExistente = obtenerPorId(id);
+        PropiedadModel existente = obtenerPorId(id);
 
-        propiedadExistente.setTitulo(propiedadActualizada.getTitulo());
-        propiedadExistente.setDescripcion(propiedadActualizada.getDescripcion());
-        propiedadExistente.setDireccion(propiedadActualizada.getDireccion());
-        propiedadExistente.setCiudad(propiedadActualizada.getCiudad());
-        propiedadExistente.setEstadoFederativo(propiedadActualizada.getEstadoFederativo());
-        propiedadExistente.setCodigoPostal(propiedadActualizada.getCodigoPostal());
-        propiedadExistente.setPais(propiedadActualizada.getPais());
-        propiedadExistente.setPrecioNoche(propiedadActualizada.getPrecioNoche());
-        propiedadExistente.setCapacidad(propiedadActualizada.getCapacidad());
-        propiedadExistente.setNumHabitaciones(propiedadActualizada.getNumHabitaciones());
-        propiedadExistente.setNumBanos(propiedadActualizada.getNumBanos());
-        propiedadExistente.setMetrosCuadrados(propiedadActualizada.getMetrosCuadrados());
-        propiedadExistente.setEstado(propiedadActualizada.getEstado());
+        existente.setTitulo(propiedadActualizada.getTitulo());
+        existente.setDescripcion(propiedadActualizada.getDescripcion());
+        existente.setTipo(propiedadActualizada.getTipo());
+        existente.setDireccion(propiedadActualizada.getDireccion());
+        existente.setCiudad(propiedadActualizada.getCiudad());
+        existente.setEstadoFederativo(propiedadActualizada.getEstadoFederativo());
+        existente.setCodigoPostal(propiedadActualizada.getCodigoPostal());
+        existente.setPais(propiedadActualizada.getPais());
+        existente.setPrecioNoche(propiedadActualizada.getPrecioNoche());
+        existente.setCapacidad(propiedadActualizada.getCapacidad());
+        existente.setNumHabitaciones(propiedadActualizada.getNumHabitaciones());
+        if (propiedadActualizada.getEstado() != null) {
+            existente.setEstado(propiedadActualizada.getEstado());
+        }
 
-        return propiedadRepository.save(propiedadExistente);
+        return propiedadRepository.save(existente);
     }
 
-    public void deletePropiedad(Long id) {
-        PropiedadModel propiedad = obtenerPorId(id);
-        propiedadRepository.delete(propiedad);
+    public void eliminar(Long id) {
+        if (!propiedadRepository.existsById(id)) {
+            throw new NoSuchElementException("No existe la propiedad con ID: " + id);
+        }
+        propiedadRepository.deleteById(id);
     }
 
 }

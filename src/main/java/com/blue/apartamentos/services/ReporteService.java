@@ -9,19 +9,21 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.blue.apartamentos.dto.ReporteDeudorDTO;
-import com.blue.apartamentos.dto.ReporteIngresosDTO;
-import com.blue.apartamentos.dto.ReporteOcupacionDTO;
+import com.blue.apartamentos.models.OcupacionReporte;
 import com.blue.apartamentos.models.PagoModel;
+import com.blue.apartamentos.models.PagoModel.EstadoPago;
+import com.blue.apartamentos.models.PagoPendiente;
 import com.blue.apartamentos.models.PropiedadModel;
+import com.blue.apartamentos.models.ReporteIngresos;
 import com.blue.apartamentos.models.ReservaModel;
+import com.blue.apartamentos.models.ReservaModel.EstadoReserva;
 import com.blue.apartamentos.repositories.IPagoRepository;
 import com.blue.apartamentos.repositories.IPropiedadRepository;
 import com.blue.apartamentos.repositories.IReservaRepository;
 
 @Service
 public class ReporteService {
-@Autowired
+    @Autowired
     private IPropiedadRepository propiedadRepository;
 
     @Autowired
@@ -30,76 +32,83 @@ public class ReporteService {
     @Autowired
     private IPagoRepository pagoRepository;
 
-    // Reporte 1: Ocupación por propiedad
-    public List<ReporteOcupacionDTO> generarReporteOcupacion(LocalDate fechaInicio, LocalDate fechaFin) {
+    public List<OcupacionReporte> generarReporteOcupacion(LocalDate fechaInicio, LocalDate fechaFin) {
         List<PropiedadModel> propiedades = propiedadRepository.findAll();
         List<ReservaModel> reservas = reservaRepository.findAll();
-        List<ReporteOcupacionDTO> reporte = new ArrayList<>();
+        List<OcupacionReporte> reporte = new ArrayList<>();
 
         for (PropiedadModel p : propiedades) {
-            long conteoReservas = 0;
+            long reservasEnPeriodo = 0;
             long diasReservados = 0;
 
             for (ReservaModel r : reservas) {
-                if (r.getPropiedad().getIdPropiedad().equals(p.getIdPropiedad()) &&
-                    (r.getEstado() == ReservaModel.EstadoReserva.CONFIRMADA || r.getEstado() == ReservaModel.EstadoReserva.FINALIZADA)) {
+                if (r.getPropiedad().getIdPropiedad().equals(p.getIdPropiedad())
+                        && r.getEstado() != EstadoReserva.CANCELADA) {
 
-                    // Verificar intersección de fechas
-                    if (!r.getFechaInicio().isAfter(fechaFin) && !r.getFechaFin().isBefore(fechaInicio)) {
-                        conteoReservas++;
-                        long dias = ChronoUnit.DAYS.between(r.getFechaInicio(), r.getFechaFin());
-                        diasReservados += (dias > 0) ? dias : 1;
+                    boolean traslape = !r.getFechaFin().isBefore(fechaInicio) && !r.getFechaInicio().isAfter(fechaFin);
+                    if (traslape) {
+                        reservasEnPeriodo++;
+                        LocalDate inicioEfectivo = r.getFechaInicio().isBefore(fechaInicio) ? fechaInicio
+                                : r.getFechaInicio();
+                        LocalDate finEfectivo = r.getFechaFin().isAfter(fechaFin) ? fechaFin : r.getFechaFin();
+                        long dias = ChronoUnit.DAYS.between(inicioEfectivo, finEfectivo);
+                        diasReservados += Math.max(dias, 1);
                     }
                 }
             }
-            reporte.add(new ReporteOcupacionDTO(p.getIdPropiedad(), p.getTitulo(), p.getTipo(), conteoReservas, diasReservados));
+
+            OcupacionReporte dto = new OcupacionReporte();
+            dto.setIdPropiedad(p.getIdPropiedad());
+            dto.setTituloPropiedad(p.getTitulo());
+            dto.setTipoPropiedad(p.getTipo());
+            dto.setTotalReservas(reservasEnPeriodo);
+            dto.setDiasReservados(diasReservados);
+            reporte.add(dto);
         }
 
         return reporte;
     }
 
-    // Reporte 2: Ingresos liquidados en un período
-    public ReporteIngresosDTO generarReporteIngresos(LocalDate fechaInicio, LocalDate fechaFin) {
+    public ReporteIngresos generarReporteIngresos(LocalDate fechaInicio, LocalDate fechaFin) {
         List<PagoModel> pagos = pagoRepository.findAll();
         BigDecimal totalIngresos = BigDecimal.ZERO;
-        int conteoPagos = 0;
+        long cantidadPagos = 0;
 
         for (PagoModel p : pagos) {
-            if (p.getEstado() == PagoModel.EstadoPago.PAGADO && p.getFechaPago() != null) {
+            if (p.getEstado() == EstadoPago.PAGADO && p.getFechaPago() != null) {
                 boolean enRango = !p.getFechaPago().isBefore(fechaInicio) && !p.getFechaPago().isAfter(fechaFin);
-                if (enRango) {
+                if (enRango && p.getMonto() != null) {
                     totalIngresos = totalIngresos.add(p.getMonto());
-                    conteoPagos++;
+                    cantidadPagos++;
                 }
             }
         }
 
-        return new ReporteIngresosDTO(fechaInicio, fechaFin, totalIngresos, conteoPagos);
+        ReporteIngresos dto = new ReporteIngresos();
+        dto.setFechaInicio(fechaInicio);
+        dto.setFechaFin(fechaFin);
+        dto.setTotalIngresos(totalIngresos);
+        dto.setCantidadPagosRegistrados(cantidadPagos);
+
+        return dto;
     }
 
-    // Reporte 3: Lista de morosos / deudores
-    public List<ReporteDeudorDTO> generarReporteDeudores() {
+    public List<PagoPendiente> generarReporteDeudores() {
         List<PagoModel> pagos = pagoRepository.findAll();
-        List<ReporteDeudorDTO> deudores = new ArrayList<>();
-        LocalDate hoy = LocalDate.now();
+        List<PagoPendiente> deudores = new ArrayList<>();
 
         for (PagoModel p : pagos) {
-            boolean esMoroso = (p.getEstado() == PagoModel.EstadoPago.ATRASADO) ||
-                               (p.getEstado() == PagoModel.EstadoPago.PENDIENTE && p.getFechaVencimiento().isBefore(hoy));
-
-            if (esMoroso) {
-                var arrendatario = p.getReserva().getArrendatario();
-                String nombreCompleto = arrendatario.getNombres() + " " + arrendatario.getApellidos();
-
-                deudores.add(new ReporteDeudorDTO(
-                    p.getIdPago(),
-                    p.getReserva().getIdReserva(),
-                    nombreCompleto,
-                    arrendatario.getEmail(),
-                    arrendatario.getTelefono(),
-                    p.getMonto(),
-                    p.getFechaVencimiento()
-                ));
+            if (p.getEstado() == EstadoPago.ATRASADO || p.getEstado() == EstadoPago.PENDIENTE) {
+                PagoPendiente dto = new PagoPendiente();
+                dto.setIdPago(p.getIdPago());
+                dto.setIdReserva(p.getReserva().getIdReserva());
+                dto.setNombreCliente(p.getReserva().getArrendatario().getNombres() + " "
+                        + p.getReserva().getArrendatario().getApellidos());
+                dto.setEmailCliente(p.getReserva().getArrendatario().getEmail());
+                dto.setTelefonoCliente(p.getReserva().getArrendatario().getTelefono());
+                dto.setMontoPendiente(p.getMonto());
+                dto.setFechaVencimiento(p.getFechaVencimiento());
+                deudores.add(dto);
             }
         }
 

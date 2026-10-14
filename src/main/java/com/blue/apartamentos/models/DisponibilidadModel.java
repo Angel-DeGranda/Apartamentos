@@ -32,7 +32,7 @@ public class DisponibilidadModel {
     @NotNull(message = "La propiedad asociada es obligatoria")
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_propiedad", nullable = false)
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+    @JsonIgnoreProperties({ "hibernateLazyInitializer", "handler" })
     private PropiedadModel propiedad;
 
     @NotNull(message = "La fecha de inicio es obligatoria")
@@ -47,7 +47,7 @@ public class DisponibilidadModel {
 
     @NotNull(message = "Debe indicar si el inmueble está disponible")
     @Column(name = "disponible", nullable = false)
-    private Boolean disponible;
+    private boolean  disponible;
 
     @DecimalMin(value = "0.0", inclusive = false, message = "El precio especial debe ser mayor a 0")
     @Column(name = "precio_especial", precision = 12, scale = 2)
@@ -61,7 +61,7 @@ public class DisponibilidadModel {
         this.fechaRegistro = LocalDateTime.now();
     }
 
-    public DisponibilidadModel(){
+    public DisponibilidadModel() {
     }
 
     public DisponibilidadModel(Long idDisponibilidad,
@@ -124,14 +124,6 @@ public class DisponibilidadModel {
         this.fechaFin = fechaFin;
     }
 
-    public Boolean getDisponible() {
-        return disponible;
-    }
-
-    public void setDisponible(Boolean disponible) {
-        this.disponible = disponible;
-    }
-
     public BigDecimal getPrecioEspecial() {
         return precioEspecial;
     }
@@ -148,6 +140,12 @@ public class DisponibilidadModel {
         this.fechaRegistro = fechaRegistro;
     }
 
-    
+    public boolean isDisponible() {
+        return disponible;
+    }
+
+    public void setDisponible(boolean disponible) {
+        this.disponible = disponible;
+    }
 
 }

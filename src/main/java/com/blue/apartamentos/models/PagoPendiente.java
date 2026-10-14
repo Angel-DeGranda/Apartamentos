@@ -1,9 +1,9 @@
-package com.blue.apartamentos.dto;
+package com.blue.apartamentos.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public class ReporteDeudorDTO {
+public class PagoPendiente {
     private Long idPago;
     private Long idReserva;
     private String nombreCliente;
@@ -12,19 +12,6 @@ public class ReporteDeudorDTO {
     private BigDecimal montoPendiente;
     private LocalDate fechaVencimiento;
 
-    public ReporteDeudorDTO() {}
-
-    public ReporteDeudorDTO(Long idPago, Long idReserva, String nombreCliente, String emailCliente, String telefonoCliente, BigDecimal montoPendiente, LocalDate fechaVencimiento) {
-        this.idPago = idPago;
-        this.idReserva = idReserva;
-        this.nombreCliente = nombreCliente;
-        this.emailCliente = emailCliente;
-        this.telefonoCliente = telefonoCliente;
-        this.montoPendiente = montoPendiente;
-        this.fechaVencimiento = fechaVencimiento;
-    }
-
-    // Getters y Setters
     public Long getIdPago() {
         return idPago;
     }

@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.blue.apartamentos.dto.ReporteDeudorDTO;
-import com.blue.apartamentos.dto.ReporteIngresosDTO;
-import com.blue.apartamentos.dto.ReporteOcupacionDTO;
+import com.blue.apartamentos.models.OcupacionReporte;
+import com.blue.apartamentos.models.PagoPendiente;
+import com.blue.apartamentos.models.ReporteIngresos;
 import com.blue.apartamentos.services.ReporteService;
 
 @RestController
@@ -22,25 +22,22 @@ public class ReporteController {
     @Autowired
     private ReporteService reporteService;
 
-    // Reporte de ocupación de propiedades entre fechas (Ej: /api/reportes/ocupacion?fechaInicio=2026-01-01&fechaFin=2026-12-31)
     @GetMapping("/ocupacion")
-    public ResponseEntity<List<ReporteOcupacionDTO>> generarReporteOcupacion(
+    public ResponseEntity<List<OcupacionReporte>> obtenerReporteOcupacion(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
         return ResponseEntity.ok(reporteService.generarReporteOcupacion(fechaInicio, fechaFin));
     }
 
-    // Reporte de ingresos financieros acumulados (Ej: /api/reportes/ingresos?fechaInicio=2026-01-01&fechaFin=2026-12-31)
     @GetMapping("/ingresos")
-    public ResponseEntity<ReporteIngresosDTO> generarReporteIngresos(
+    public ResponseEntity<ReporteIngresos> obtenerReporteIngresos(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaInicio,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fechaFin) {
         return ResponseEntity.ok(reporteService.generarReporteIngresos(fechaInicio, fechaFin));
     }
 
-    // Reporte de deudores
     @GetMapping("/deudores")
-    public ResponseEntity<List<ReporteDeudorDTO>> generarReporteDeudores() {
+    public ResponseEntity<List<PagoPendiente>> obtenerReporteDeudores() {
         return ResponseEntity.ok(reporteService.generarReporteDeudores());
     }
 }

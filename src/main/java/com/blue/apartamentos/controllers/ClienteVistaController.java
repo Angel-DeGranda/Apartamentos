@@ -10,8 +10,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.blue.apartamentos.exceptions.BadRequestException;
-import com.blue.apartamentos.exceptions.ResourceNotFoundException;
 import com.blue.apartamentos.models.ClienteModel;
 import com.blue.apartamentos.services.ClienteService;
 
@@ -22,10 +20,9 @@ public class ClienteVistaController {
     @Autowired
     private ClienteService clienteService;
 
-    // Cargar la vista principal con el catálogo de clientes y el formulario de registro
     @GetMapping
     public String mostrarClientes(Model model) {
-        model.addAttribute("clientes", clienteService.getAllClientes());
+        model.addAttribute("clientes", clienteService.obtenerTodos());
         if (!model.containsAttribute("cliente")) {
             model.addAttribute("cliente", new ClienteModel());
         }
@@ -34,38 +31,37 @@ public class ClienteVistaController {
         return "clientes";
     }
 
-    // Registrar un cliente nuevo
     @PostMapping("/guardar")
     public String guardarCliente(@ModelAttribute ClienteModel cliente, RedirectAttributes atributos) {
         try {
-            clienteService.saveCliente(cliente);
+            clienteService.guardar(cliente);
             atributos.addFlashAttribute("mensaje", "Cliente registrado correctamente.");
-        } catch (BadRequestException ex) {
+        } catch (Exception ex) {
             atributos.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/vista/clientes";
     }
 
-    // Actualizar datos de un cliente existente
     @PostMapping("/{id}/actualizar")
-    public String actualizarCliente(@PathVariable Long id, @ModelAttribute ClienteModel cliente, RedirectAttributes atributos) {
+    public String actualizarCliente(@PathVariable Long id, @ModelAttribute ClienteModel cliente,
+            RedirectAttributes atributos) {
         try {
             clienteService.actualizar(id, cliente);
             atributos.addFlashAttribute("mensaje", "Cliente actualizado correctamente.");
-        } catch (BadRequestException | ResourceNotFoundException ex) {
+        } catch (Exception ex) {
             atributos.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/vista/clientes";
     }
 
-    // Eliminar un cliente por ID
     @PostMapping("/{id}/eliminar")
     public String eliminarCliente(@PathVariable Long id, RedirectAttributes atributos) {
         try {
-            clienteService.deleteCliente(id);
+            clienteService.eliminar(id);
             atributos.addFlashAttribute("mensaje", "Cliente eliminado correctamente.");
         } catch (Exception ex) {
-            atributos.addFlashAttribute("error", "No se puede eliminar el cliente. Verifique que no tenga propiedades o reservas asociadas.");
+            atributos.addFlashAttribute("error",
+                    "No se puede eliminar el cliente. Verifique que no tenga propiedades o reservas asociadas.");
         }
         return "redirect:/vista/clientes";
     }

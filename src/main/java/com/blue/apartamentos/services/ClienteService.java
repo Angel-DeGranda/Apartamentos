@@ -1,13 +1,13 @@
 package com.blue.apartamentos.services;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.blue.apartamentos.exceptions.BadRequestException;
-import com.blue.apartamentos.exceptions.ResourceNotFoundException;
 import com.blue.apartamentos.models.ClienteModel;
+import com.blue.apartamentos.models.ClienteModel.TipoCliente;
 import com.blue.apartamentos.repositories.IClienteRepository;
 
 @Service
@@ -16,53 +16,54 @@ public class ClienteService {
     @Autowired
     private IClienteRepository clienteRepository;
 
-    public List<ClienteModel> getAllClientes() {
+    public List<ClienteModel> obtenerTodos() {
         return clienteRepository.findAll();
     }
 
-    public ClienteModel  getClienteById(Long id) {
+    public ClienteModel obtenerPorId(Long id) {
         return clienteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente no encontrado con el ID: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Cliente no encontrado con ID: " + id));
     }
 
-    public List<ClienteModel> obtenerPorTipo(ClienteModel.TipoCliente tipo) {
+    public List<ClienteModel> obtenerPorTipo(TipoCliente tipo) {
         return clienteRepository.findByTipo(tipo);
     }
 
-    public ClienteModel saveCliente(ClienteModel cliente) {
-        // Validar correo duplicado
+    public ClienteModel guardar(ClienteModel cliente) {
         if (clienteRepository.existsByEmail(cliente.getEmail())) {
-            throw new BadRequestException("El correo electrónico ya se encuentra registrado");
-        }
-        // Validar INE duplicado si se proporciona
-        if (cliente.getIne() != null && !cliente.getIne().trim().isEmpty() && clienteRepository.existsByIne(cliente.getIne())) {
-            throw new BadRequestException("El número de INE ya se encuentra registrado");
+            throw new IllegalArgumentException("El correo electrónico ya se encuentra registrado: " + cliente.getEmail());
         }
         return clienteRepository.save(cliente);
     }
 
     public ClienteModel actualizar(Long id, ClienteModel clienteActualizado) {
-        ClienteModel clienteExistente = getClienteById(id);
+        ClienteModel existente = obtenerPorId(id);
 
-        // Si cambia el correo, verificar que no pertenezca a otro usuario
-        if (!clienteExistente.getEmail().equalsIgnoreCase(clienteActualizado.getEmail()) &&
-            clienteRepository.existsByEmail(clienteActualizado.getEmail())) {
-            throw new BadRequestException("El nuevo correo ya está en uso por otro cliente");
+        if (!existente.getEmail().equalsIgnoreCase(clienteActualizado.getEmail()) 
+                && clienteRepository.existsByEmail(clienteActualizado.getEmail())) {
+            throw new IllegalArgumentException("El correo electrónico ya está en uso por otro cliente.");
         }
 
-        clienteExistente.setNombres(clienteActualizado.getNombres());
-        clienteExistente.setApellidos(clienteActualizado.getApellidos());
-        clienteExistente.setEmail(clienteActualizado.getEmail());
-        clienteExistente.setTelefono(clienteActualizado.getTelefono());
-        clienteExistente.setDireccion(clienteActualizado.getDireccion());
-        clienteExistente.setEstatus(clienteActualizado.getEstatus());
-        clienteExistente.setTipo(clienteActualizado.getTipo());
+        existente.setNombres(clienteActualizado.getNombres());
+        existente.setApellidos(clienteActualizado.getApellidos());
+        existente.setEmail(clienteActualizado.getEmail());
+        existente.setTelefono(clienteActualizado.getTelefono());
+        existente.setIne(clienteActualizado.getIne());
+        existente.setDireccion(clienteActualizado.getDireccion());
+        if (clienteActualizado.getTipo() != null) {
+            existente.setTipo(clienteActualizado.getTipo());
+        }
+        if (clienteActualizado.getEstatus() != null) {
+            existente.setEstatus(clienteActualizado.getEstatus());
+        }
 
-        return clienteRepository.save(clienteExistente);
+        return clienteRepository.save(existente);
     }
 
-    public void deleteCliente(Long id) {
-        ClienteModel cliente = getClienteById(id);
-        clienteRepository.delete(cliente);
+    public void eliminar(Long id) {
+        if (!clienteRepository.existsById(id)) {
+            throw new NoSuchElementException("No existe el cliente con ID: " + id);
+        }
+        clienteRepository.deleteById(id);
     }
 }

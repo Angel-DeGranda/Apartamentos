@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import com.blue.apartamentos.exceptions.BadRequestException;
-import com.blue.apartamentos.exceptions.ResourceNotFoundException;
 import com.blue.apartamentos.models.PagoModel;
 import com.blue.apartamentos.services.PagoService;
 import com.blue.apartamentos.services.ReservaService;
@@ -27,38 +25,35 @@ public class PagoVistaController {
     @Autowired
     private ReservaService reservaService;
 
-    // Cargar la vista de gestión de cobros y pagos
     @GetMapping
     public String mostrarPagos(Model model) {
-        model.addAttribute("pagos", pagoService.getAll());
+        model.addAttribute("pagos", pagoService.obtenerTodos());
         if (!model.containsAttribute("pago")) {
             model.addAttribute("pago", new PagoModel());
         }
-        model.addAttribute("reservas", reservaService.getAll());
+        model.addAttribute("reservas", reservaService.obtenerTodas());
         model.addAttribute("metodosPago", PagoModel.MetodoPago.values());
         model.addAttribute("estadosPago", PagoModel.EstadoPago.values());
         return "pagos";
     }
 
-    // Registrar un abono o liquidación
     @PostMapping("/guardar")
     public String registrarPago(@ModelAttribute PagoModel pago, RedirectAttributes atributos) {
         try {
             pagoService.registrarPago(pago);
             atributos.addFlashAttribute("mensaje", "Pago registrado correctamente.");
-        } catch (BadRequestException | ResourceNotFoundException ex) {
+        } catch (Exception ex) {
             atributos.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/vista/pagos";
     }
 
-    // Modificar el estado de un pago (ej. marcar como PAGADO o ATRASADO)
     @PostMapping("/{id}/actualizar-estado")
     public String actualizarEstado(@PathVariable Long id, @RequestParam PagoModel.EstadoPago nuevoEstado, RedirectAttributes atributos) {
         try {
             pagoService.actualizarEstado(id, nuevoEstado);
             atributos.addFlashAttribute("mensaje", "Estado de pago actualizado.");
-        } catch (ResourceNotFoundException ex) {
+        } catch (Exception ex) {
             atributos.addFlashAttribute("error", ex.getMessage());
         }
         return "redirect:/vista/pagos";
